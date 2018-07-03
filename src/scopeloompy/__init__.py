@@ -1,6 +1,4 @@
 import anndata
-import zlib
-import base64
 import loompy as lp
 import pandas as pd
 from pathlib import Path
@@ -8,6 +6,7 @@ import os
 from scipy.sparse import issparse
 import numpy as np
 import json
+from scopeloompy import utils
 
 class Loom():
     
@@ -40,20 +39,6 @@ class Loom():
         self.embeddings_x = None
         self.embeddings_y = None
     
-    @staticmethod
-    def compress_encode(value):
-        '''
-        Compress using ZLIB algorithm and encode the given value in base64.
-        '''
-        return base64.b64encode(zlib.compress(json.dumps(value).encode('ascii'))).decode('ascii')
-    
-    @staticmethod
-    def df_to_named_matrix(df):
-        arr_ip = [tuple(i) for i in df.as_matrix()]
-        dtyp = np.dtype(list(zip(df.dtypes.index, df.dtypes)))
-        arr = np.array(arr_ip, dtype=dtyp)
-        return arr
-    
     def from_anndata(self, ann_data):
         # Set the row attributes and the row index of this Loom
         if(self.debug):
@@ -77,8 +62,6 @@ class Loom():
         self.matrix = ann_data.X.T
         if issparse(self.matrix):
             self.matrix = self.matrix.tocoo()
-        if(self.debug):
-            print("Saving this Loom object as .loom file...")
         self.init()
         self.finalize()
     
@@ -98,9 +81,9 @@ class Loom():
         '''
         Update all col_attrs, row_attrs and attrs dictionnaries
         '''
-        col_attrs = {"Embedding": Loom.df_to_named_matrix(self.embedding),
-             "Embeddings_X": Loom.df_to_named_matrix(self.embeddings_x),
-             "Embeddings_Y": Loom.df_to_named_matrix(self.embeddings_y),
+        col_attrs = {"Embedding": utils.df_to_named_matrix(self.embedding),
+             "Embeddings_X": utils.df_to_named_matrix(self.embeddings_x),
+             "Embeddings_Y": utils.df_to_named_matrix(self.embeddings_y),
         }
         self.col_attrs.update(col_attrs)
         row_attrs = {"Gene": self.row_index}
@@ -120,7 +103,7 @@ class Loom():
             self.file_path.unlink()
         # Compress MetaData global attribute
         if Loom.GLOBAL_META_DATA_KEY in self.global_attrs:
-            self.global_attrs[Loom.GLOBAL_META_DATA_KEY] = Loom.compress_encode(value=self.global_attrs[Loom.GLOBAL_META_DATA_KEY])
+            self.global_attrs[Loom.GLOBAL_META_DATA_KEY] = utils.compress_encode(value=self.global_attrs[Loom.GLOBAL_META_DATA_KEY])
         lp.create(os.fspath(path=self.file_path.resolve()), 
                   self.matrix, 
                   row_attrs=self.row_attrs, 
@@ -197,7 +180,7 @@ class Loom():
     
     def add_annotation_from_col_attrs(self, key):
         if self.debug:
-            print("Adding annotation from existing column attribute...")
+            print("Adding annotation ({0}) from existing column attribute...".format(key))
         ad = self.col_attrs[key]
         if len(np.unique(ad)) > 245:
             raise ValueError("Cannot add an annotation with more than 245 unique values.")

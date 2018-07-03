@@ -3,7 +3,6 @@ import glob
 import io
 import os
 import setuptools
-from os.path import join
 
 
 setuptools.setup(
@@ -12,7 +11,7 @@ setuptools.setup(
     description="Python package to create .loom files compatible with SCope",
     python_requires=">=3.5",
     keywords='scope loom single-cell',
-    author="Maxime De Waegeneer, Kristofer Davie",
+    author="Kristofer Davie, Maxime De Waegeneer",
     url='https://github.com/aertslab/SCopeLoomPy.git',
     license='GPL-3.0+',
     packages=setuptools.find_packages(where='src'),
