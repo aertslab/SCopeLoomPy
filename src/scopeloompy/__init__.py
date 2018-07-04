@@ -22,7 +22,6 @@ class Loom():
         self.loom_connection = None
         # Global attributes
         self.global_attrs = dict()
-        self.global_attrs_compressed = dict()
         self.meta_data = dict()
         
         # Matrix
@@ -76,6 +75,7 @@ class Loom():
         self.init_embedding()
         self.init_extra_embeddings()
         self.init_meta_data_annotations()
+        self.init_meta_data_metrics()
     
     def update(self):
         '''
@@ -158,7 +158,7 @@ class Loom():
     
     def add_embedding_from_col_attrs(self, key, name, is_default, do_remove = False):
         if self.debug:
-            print("Adding embedding from existing column attribute...")
+            print("Adding embedding {0} from existing column attribute...".format(key))
         ed = self.col_attrs[key]
         self.add_embedding(name=name, embedding=ed, is_default=is_default)
         if do_remove:
@@ -166,6 +166,7 @@ class Loom():
     
     def init_meta_data_annotations(self):
         self.meta_data['annotations'] = list()
+    
         
     def add_annotation_meta_data(self, name, values):
         am = {
@@ -181,9 +182,33 @@ class Loom():
     def add_annotation_from_col_attrs(self, key):
         if self.debug:
             print("Adding annotation ({0}) from existing column attribute...".format(key))
+        if key not in self.col_attrs:
+            raise ValueError("Cannot find annotation with {} as key.".format(key))
         ad = self.col_attrs[key]
         if len(np.unique(ad)) > 245:
             raise ValueError("Cannot add an annotation with more than 245 unique values.")
         self.add_annotation_meta_data(name=key, values=ad)
+        # Update all attributes
+        self.update()
+    
+    def init_meta_data_metrics(self):
+        self.meta_data['metrics'] = list()
+
+    def add_metric_meta_data(self, name):
+        am = {
+            "name": name
+        }
+        # Filter out all embeddings having the given or the given name
+        if len(self.meta_data['metrics']) > 0:
+            self.meta_data['metrics'] = list(filter(lambda x: x["name"] != name, self.meta_data['metrics']))
+        # Add the given embedding
+        self.meta_data["metrics"].append(am)
+
+    def add_metric_from_col_attrs(self, key):
+        if self.debug:
+            print("Adding metric ({0}) from existing column attribute...".format(key))
+        if key not in self.col_attrs:
+            raise ValueError("Cannot find metric with {0} as key.".format(key))
+        self.add_metric_meta_data(name=key)
         # Update all attributes
         self.update()

@@ -7,7 +7,7 @@ import setuptools
 
 setuptools.setup(
     name='scopeloompy',
-    version='0.0.1',
+    version='0.1.0',
     description="Python package to create .loom files compatible with SCope",
     python_requires=">=3.5",
     keywords='scope loom single-cell',
