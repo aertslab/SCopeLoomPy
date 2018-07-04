@@ -36,3 +36,8 @@ Find all the variables that you can add to the `loom`:
 ```
 loom.col_attrs.keys()
 ```
+
+Save to .loom file:
+```
+loom.finalize()
+```
